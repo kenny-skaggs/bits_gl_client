@@ -1,3 +1,6 @@
+import { Button } from "./graphics/components";
+import { ShaderProgram } from "./graphics/shader";
+
 const vertexShaderSource = `
     attribute vec4 aPosition;
     uniform mat4 uModelViewMatrix;
@@ -17,13 +20,11 @@ const mat4 = glMatrix.mat4;
 
 const app = {
     glContext: null,
-    shaderProgram: null,
-    shaderLocations: null,
-    vertexBuffer: null
+    shaderProgram: null
 }
 initGL();
 
-initVertexBuffer(app.glContext);
+const button = new Button(app.glContext, 5, 8, 2, 0.5);
 
 
 let lastTime = 0;
@@ -33,7 +34,7 @@ function renderLoop(now) {
     now *= 0.001; // convert to seconds
     const deltaTime = now - lastTime;
     lastTime = now;
-    rotation += deltaTime;
+    // rotation += deltaTime;
 
     render(rotation);
 
@@ -41,6 +42,7 @@ function renderLoop(now) {
 }
 
 requestAnimationFrame(renderLoop);
+
 
 
 
@@ -57,25 +59,17 @@ function render(rotation) {
     const zFar = 100.0;
 
     const projectionMatrix = mat4.create();
-    mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
+    mat4.ortho(projectionMatrix, 0.0, 10.0, 0.0, 10.0, 0.0, -100.0);
 
     const modelViewMatrix = mat4.create();
-    mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, -6.0]);
+    // mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, -6.0]);
     mat4.rotate(modelViewMatrix, modelViewMatrix, rotation, [0, 0, 1]);
 
-    gl.useProgram(app.shaderProgram);
-    gl.uniformMatrix4fv(
-        app.shaderLocations.uniform.projectionMatrix, false, projectionMatrix
-    );
-    gl.uniformMatrix4fv(
-        app.shaderLocations.uniform.modelViewMatrix, false, modelViewMatrix
-    );
+    app.shaderProgram.use();
+    app.shaderProgram.loadUniformMatrix4fv(app.shaderProgram.uniforms.projectionMatrix, projectionMatrix);
+    app.shaderProgram.loadUniformMatrix4fv(app.shaderProgram.uniforms.modelViewMatrix, modelViewMatrix);
 
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, app.vertexBuffer);
-    const offset = 0;
-    const vertexCount = 3;
-    gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
+    button.render();
 }
 
 function initGL() {
@@ -86,80 +80,13 @@ function initGL() {
         alert("WebGL init failed");
     }
 
-    initShaderProgram(gl);
+    app.shaderProgram = new ShaderProgram(
+        gl, vertexShaderSource, fragmentShaderSource,
+        ["projectionMatrix", "modelViewMatrix"]
+    );
 
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
 
     app.glContext = gl;
-}
-
-
-function initShaderProgram(gl) {
-    const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-    const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-
-    const shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, vertexShader);
-    gl.attachShader(shaderProgram, fragmentShader);
-    gl.linkProgram(shaderProgram);
-
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        alert("error linking shader program");
-        console.log(gl.getProgramInfoLog(shaderProgram));
-    }
-
-    app.shaderProgram = shaderProgram;
-    app.shaderLocations = {
-        attribute: {
-            position: gl.getAttribLocation(shaderProgram, "aPosition")
-        },
-        uniform: {
-            projectionMatrix: gl.getUniformLocation(shaderProgram, "uProjectionMatrix"),
-            modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix")
-        }
-    }
-}
-
-function loadShader(gl, type, source) {
-    const shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        alert("error compiling shader!");
-        console.log(gl.getShaderInfoLog(shader));
-        gl.deleteShader(shader);
-    }
-
-    return shader;
-}
-
-function initVertexBuffer(gl) {
-    const vertexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-
-    const coords = [
-         0.0,  1.0,
-        -1.0, -1.0,
-         1.0, -1.0
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(coords), gl.STATIC_DRAW);
-
-    const numValues = 2;
-    const type = gl.FLOAT;
-    const normalize = false;
-    const stride = 0;  // tell GL to calculate it itself
-    const offset = 0;
-    gl.vertexAttribPointer(
-        app.shaderLocations.attribute.position,
-        numValues,
-        type,
-        normalize,
-        stride,
-        offset
-    );
-    gl.enableVertexAttribArray(app.shaderLocations.attribute.position);
-
-    app.vertexBuffer = vertexBuffer;
 }
