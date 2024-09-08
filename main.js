@@ -1,5 +1,6 @@
 import { Button } from "./graphics/components";
 import { ShaderProgram } from "./graphics/shader";
+import { InputManager } from "./services";
 
 const vertexShaderSource = `
     attribute vec4 aPosition;
@@ -11,8 +12,13 @@ const vertexShaderSource = `
     }
 `;
 const fragmentShaderSource = `
+    precision mediump float;
+
+
+    uniform vec4 uColor;
+
     void main() {
-        gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+        gl_FragColor = uColor;
     }
 `;
 
@@ -20,11 +26,23 @@ const mat4 = glMatrix.mat4;
 
 const app = {
     glContext: null,
-    shaderProgram: null
+    shaderProgram: null,
+    canvas: null,
+    view: {
+        width:  10.0,
+        height: 10.0
+    }
 }
 initGL();
+InputManager.init(
+    app.view.width, app.view.height,
+    app.canvas.offsetLeft, app.canvas.offsetTop,
+    app.canvas.width, app.canvas.height
+);
+
 
 const button = new Button(app.glContext, 5, 8, 2, 0.5);
+button.onClick = () => button.color = [0.0, 0.0, 0.8, 1.0];
 
 
 let lastTime = 0;
@@ -52,14 +70,9 @@ function render(rotation) {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clearDepth(1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    
-    const fieldOfView = (45 * Math.PI) / 180
-    const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-    const zNear = 0.1;
-    const zFar = 100.0;
 
     const projectionMatrix = mat4.create();
-    mat4.ortho(projectionMatrix, 0.0, 10.0, 0.0, 10.0, 0.0, -100.0);
+    mat4.ortho(projectionMatrix, 0.0, app.view.width, 0.0, app.view.height, 0.0, -100.0);
 
     const modelViewMatrix = mat4.create();
     // mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, -6.0]);
@@ -69,7 +82,7 @@ function render(rotation) {
     app.shaderProgram.loadUniformMatrix4fv(app.shaderProgram.uniforms.projectionMatrix, projectionMatrix);
     app.shaderProgram.loadUniformMatrix4fv(app.shaderProgram.uniforms.modelViewMatrix, modelViewMatrix);
 
-    button.render();
+    button.render(app);
 }
 
 function initGL() {
@@ -82,11 +95,12 @@ function initGL() {
 
     app.shaderProgram = new ShaderProgram(
         gl, vertexShaderSource, fragmentShaderSource,
-        ["projectionMatrix", "modelViewMatrix"]
+        ["projectionMatrix", "modelViewMatrix", "color"]
     );
 
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
 
     app.glContext = gl;
+    app.canvas = canvas;
 }

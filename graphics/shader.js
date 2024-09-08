@@ -44,6 +44,10 @@ class ShaderProgram {
     loadUniformMatrix4fv(uniformLocation, value) {
         this.glContext.uniformMatrix4fv(uniformLocation, false, value);
     }
+
+    loadUniformVec4v(uniformLocation, value) {
+        this.glContext.uniform4fv(uniformLocation, value);
+    }
 }
 
 export { ShaderProgram };
