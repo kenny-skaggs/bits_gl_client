@@ -48,6 +48,10 @@ class ShaderProgram {
     loadUniformVec4v(uniformLocation, value) {
         this.glContext.uniform4fv(uniformLocation, value);
     }
+
+    loadUniform1i(uniformLocation, value) {
+        this.glContext.uniform1i(uniformLocation, value);
+    }
 }
 
 export { ShaderProgram };
