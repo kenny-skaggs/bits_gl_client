@@ -14,6 +14,9 @@ const InputManager = {
         document.addEventListener("click", this._mouseClickHandler, false);
         this._mouseClickListeners = [];
 
+        document.addEventListener("keydown", this._keydownHandler, false);
+        this._keydownListeners = [];
+
         InputManager._instance = this;
     },
     getInstance() {
@@ -33,11 +36,20 @@ const InputManager = {
             listener.onMouseClick(coords.x, coords.y);
         });
     },
+    _keydownHandler(event) {
+        const instance = InputManager.getInstance();
+        instance._keydownListeners.forEach(listener => {
+            listener.onKeydown(event.key);
+        });
+    },
     addMouseMoveListeners(listener) {
         this._mouseMoveListeners.push(listener);
     },
     addMouseClickListeners(listener) {
         this._mouseClickListeners.push(listener);
+    },
+    addKeydownListener(listener) {
+        this._keydownListeners.push(listener);
     },
     _convertCoord(eventX, eventY) {
         const instance = InputManager.getInstance();

@@ -1,4 +1,5 @@
 import { textData } from "../font/montserrat";
+import { InputManager } from "../services";
 
 
 let renderingInitialized = false;
@@ -33,63 +34,28 @@ function handleAtlasLoaded(image, gl) {
 class Text {
     constructor(content, glContext, x, y, width, height) {
         this._content = content;
-        // this._textureID = this._buildTexture(glContext);
+        this._gl = glContext;
+
         this._scale = height / 32;
-        this._voa = this._buildVoa(glContext, x, y, width, height);
+        this._vertexCoords = [];
+        this._xOffset = 0;
+        this._dimensions = {
+            x: x, y: y,
+            width: width, height: height
+        }
+        this._voa = this._buildVoa(glContext);
+
+        InputManager.getInstance().addKeydownListener(this);
     }
 
-    // _buildTexture(glContext) {
-    //     const canvas = renderContext.canvas;
-    //     // canvas.width = 200;
-    //     // canvas.height = 26;
-
-    //     renderContext.font = "50px monospace";
-    //     renderContext.textAlign = "center";
-    //     renderContext.textBaseline = "middle";
-    //     renderContext.fillStyle = "black";
-    //     renderContext.clearRect(0, 0, canvas.width, canvas.height);
-    //     renderContext.fillText(this._content, canvas.width / 2, canvas.height / 2);
-        
-    //     const glTex = glContext.createTexture();
-    //     glContext.bindTexture(glContext.TEXTURE_2D, glTex);
-    //     glContext.texImage2D(
-    //         glContext.TEXTURE_2D, 0, glContext.RGBA, glContext.RGBA,
-    //         glContext.UNSIGNED_BYTE, canvas
-    //     );
-
-    //     console.log(canvas.width, canvas.height);
-        
-    //     return glTex;
-    // }
-
-    _buildVoa(gl, x, y, width, height) {
+    _buildVoa(gl) {
         const voa = gl.createVertexArray();
         gl.bindVertexArray(voa);
 
         const buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
 
-        const coords = [];
-        /*
-
-                    x,          y, 0 , 0.27,
-                    x, y + height, 0, 0.15,
-            x + width,          y, 0.06, 0.27,
-            x + width, y + height, 0.06, 0.15
-        
-        */
-        let xOffset = 0;
-        [...this._content].forEach(char => {
-            const code = char.charCodeAt(0);
-            const data = textData[code];
-            coords.push(                             x + xOffset + data.xoffset * this._scale,                                       y,                  data.x / atlasData.width,   (data.y + data.height) / atlasData.height);
-            coords.push(                             x + xOffset + data.xoffset * this._scale, y + height - data.yoffset * this._scale,                  data.x / atlasData.width,                   data.y / atlasData.height);
-            coords.push(  data.width * this._scale + x + xOffset + data.xoffset * this._scale,                                       y,   (data.x + data.width) / atlasData.width,   (data.y + data.height) / atlasData.height);
-            coords.push(  data.width * this._scale + x + xOffset + data.xoffset * this._scale, y + height - data.yoffset * this._scale,   (data.x + data.width) / atlasData.width,                   data.y / atlasData.height);
-
-            xOffset += data.xadvance * this._scale;
-        });
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(coords), gl.STATIC_DRAW);
+        this._sendVertices();
 
         gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 4 * 4, 0);
         gl.enableVertexAttribArray(0);
@@ -97,6 +63,29 @@ class Text {
         gl.enableVertexAttribArray(1);
 
         return voa;
+    }
+
+    _sendVertices() {
+        [...this._content].forEach((char) => this._appendQuad(char));
+        this._gl.bufferData(this._gl.ARRAY_BUFFER, new Float32Array(this._vertexCoords), this._gl.STATIC_DRAW);
+    }
+
+    onKeydown(char) {
+        this._content += char;
+        this._vertexCoords = [];
+        this._xOffset = 0;
+        this._sendVertices();
+    }
+
+    _appendQuad(char) {
+        const code = char.charCodeAt(0);
+        const data = textData[code];
+        this._vertexCoords.push(                             this._dimensions.x + this._xOffset + data.xoffset * this._scale,                                       this._dimensions.y,                  data.x / atlasData.width,   (data.y + data.height) / atlasData.height);
+        this._vertexCoords.push(                             this._dimensions.x + this._xOffset + data.xoffset * this._scale, this._dimensions.y + this._dimensions.height - data.yoffset * this._scale,                  data.x / atlasData.width,                   data.y / atlasData.height);
+        this._vertexCoords.push(  data.width * this._scale + this._dimensions.x + this._xOffset + data.xoffset * this._scale,                                       this._dimensions.y,   (data.x + data.width) / atlasData.width,   (data.y + data.height) / atlasData.height);
+        this._vertexCoords.push(  data.width * this._scale + this._dimensions.x + this._xOffset + data.xoffset * this._scale, this._dimensions.y + this._dimensions.height - data.yoffset * this._scale,   (data.x + data.width) / atlasData.width,                   data.y / atlasData.height);
+
+        this._xOffset += data.xadvance * this._scale;
     }
 
     render(gl, textShader) {

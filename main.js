@@ -123,7 +123,7 @@ function render(rotation) {
     app.textureProgram.loadUniformMatrix4fv(app.textureProgram.uniforms.modelViewMatrix, modelViewMatrix);
 
     if (text === undefined && renderingInitialized) {
-        text = new Text("hello", app.glContext, 4.5, 7.7, 3, 0.7);
+        text = new Text("a", app.glContext, 2.5, 7.7, 3, 0.7);
     } else if (text !== undefined) {
         text.render(app.glContext, app.textureProgram);
     }
