@@ -1,5 +1,4 @@
 import { textData } from "../font/montserrat";
-import { InputManager } from "../services";
 
 
 let renderingInitialized = false;
@@ -37,16 +36,19 @@ class Text {
         this._gl = glContext;
 
         this._scale = height / 32;
-        this._vertices = [];
-        this._indices = [];
-        this._xOffset = 0;
         this._dimensions = {
             x: x, y: y,
             width: width, height: height
         }
+        this._setCharVars();
         this._buildVoa(glContext);
+    }
 
-        InputManager.getInstance().addKeydownListener(this);
+    _setCharVars() {
+        this._vertices = [];
+        this._indices = [];
+        this._xOffset = 0;
+        this.characterWidths = [];
     }
 
     _buildVoa(gl) {
@@ -67,19 +69,12 @@ class Text {
         this._gl.enableVertexAttribArray(1);
     }
 
-    onKeydown(char, keycode) {
-        if (keycode < 32 || keycode > 126) {
-            return;
-        }
-
-        this._content += char;
-        this._vertices = [];
-        this._indices = [];
-        this._xOffset = 0;
+    setContent(content) {
+        this._content = content;
+        this._setCharVars();
         
         this._setupBuffers();
         this._sendVertices();
-        // this._gl.bindVertexArray(null);
     }
 
     _sendVertices() {
@@ -111,7 +106,9 @@ class Text {
             nextIndex + 1, nextIndex + 2, nextIndex + 3
         );
 
-        this._xOffset += data.xadvance * this._scale;
+        const charWidth = data.xadvance * this._scale;
+        this._xOffset += charWidth;
+        this.characterWidths.push(charWidth);
     }
 
     render(gl, textShader) {
