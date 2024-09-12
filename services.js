@@ -37,9 +37,14 @@ const InputManager = {
         });
     },
     _keydownHandler(event) {
+        event.stopPropagation();
+        event.preventDefault();
+
+        if (event.key === "r" && event.ctrlKey) location.reload();
+
         const instance = InputManager.getInstance();
         instance._keydownListeners.forEach(listener => {
-            listener.onKeydown(event.key);
+            listener.onKeydown(event.key, event.keyCode);
         });
     },
     addMouseMoveListeners(listener) {

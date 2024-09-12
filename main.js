@@ -1,5 +1,5 @@
-import { Button } from "./graphics/components";
-import { Text, initRendering, renderingInitialized } from "./graphics/text";
+import { Button, TextInput } from "./graphics/components";
+import { initRendering, renderingInitialized } from "./graphics/text";
 import { ShaderProgram } from "./graphics/shader";
 import { InputManager } from "./services";
 
@@ -45,9 +45,10 @@ const textFragmentSource = `
     varying vec2 vTexCoord;
 
     uniform sampler2D uTexture;
+    uniform vec4 uColor;
 
     void main() {
-        gl_FragColor = texture2D(uTexture, vTexCoord);
+        gl_FragColor = uColor * texture2D(uTexture, vTexCoord);
     }
 `;
 
@@ -116,16 +117,18 @@ function render(rotation) {
     app.shaderProgram.loadUniformMatrix4fv(app.shaderProgram.uniforms.projectionMatrix, projectionMatrix);
     app.shaderProgram.loadUniformMatrix4fv(app.shaderProgram.uniforms.modelViewMatrix, modelViewMatrix);
 
-    button.render(app);
-
     app.textureProgram.use();
     app.textureProgram.loadUniformMatrix4fv(app.textureProgram.uniforms.projectionMatrix, projectionMatrix);
     app.textureProgram.loadUniformMatrix4fv(app.textureProgram.uniforms.modelViewMatrix, modelViewMatrix);
 
+    app.shaderProgram.use();
+    // button.render(app);
+
+
     if (text === undefined && renderingInitialized) {
-        text = new Text("a", app.glContext, 2.5, 7.7, 3, 0.7);
+        text = new TextInput(app.glContext, 1, 6, 3, 1);
     } else if (text !== undefined) {
-        text.render(app.glContext, app.textureProgram);
+        text.render(app);
     }
 }
 
@@ -143,7 +146,7 @@ function initGL() {
     );
     app.textureProgram = new ShaderProgram(
         gl, textVertexSource, textFragmentSource,
-        ["projectionMatrix", "modelViewMatrix", "texture"]
+        ["projectionMatrix", "modelViewMatrix", "texture", "color"]
     );
 
     gl.enable(gl.DEPTH_TEST);

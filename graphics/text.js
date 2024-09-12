@@ -37,53 +37,79 @@ class Text {
         this._gl = glContext;
 
         this._scale = height / 32;
-        this._vertexCoords = [];
+        this._vertices = [];
+        this._indices = [];
         this._xOffset = 0;
         this._dimensions = {
             x: x, y: y,
             width: width, height: height
         }
-        this._voa = this._buildVoa(glContext);
+        this._buildVoa(glContext);
 
         InputManager.getInstance().addKeydownListener(this);
     }
 
     _buildVoa(gl) {
-        const voa = gl.createVertexArray();
-        gl.bindVertexArray(voa);
+        this._ab = gl.createBuffer();
+        this._eab = gl.createBuffer();
 
-        const buffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-
+        this._setupBuffers();
         this._sendVertices();
+    }
 
-        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 4 * 4, 0);
-        gl.enableVertexAttribArray(0);
-        gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 4 * 4, 2 * 4);
-        gl.enableVertexAttribArray(1);
+    _setupBuffers() {
+        this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._ab);
+        this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, this._eab);
 
-        return voa;
+        this._gl.vertexAttribPointer(0, 2, this._gl.FLOAT, false, 4 * 4, 0);
+        this._gl.enableVertexAttribArray(0);
+        this._gl.vertexAttribPointer(1, 2, this._gl.FLOAT, false, 4 * 4, 2 * 4);
+        this._gl.enableVertexAttribArray(1);
+    }
+
+    onKeydown(char, keycode) {
+        if (keycode < 32 || keycode > 126) {
+            return;
+        }
+
+        this._content += char;
+        this._vertices = [];
+        this._indices = [];
+        this._xOffset = 0;
+        
+        this._setupBuffers();
+        this._sendVertices();
+        // this._gl.bindVertexArray(null);
     }
 
     _sendVertices() {
-        [...this._content].forEach((char) => this._appendQuad(char));
-        this._gl.bufferData(this._gl.ARRAY_BUFFER, new Float32Array(this._vertexCoords), this._gl.STATIC_DRAW);
+        console.log(this._content);
+        [...this._content].forEach((char, index) => this._appendQuad(char, index));
+        this._gl.bufferData(
+            this._gl.ARRAY_BUFFER,
+            new Float32Array(this._vertices),
+            this._gl.DYNAMIC_DRAW
+        );
+        this._gl.bufferData(
+            this._gl.ELEMENT_ARRAY_BUFFER,
+            new Uint16Array(this._indices),
+            this._gl.DYNAMIC_DRAW
+        );
     }
 
-    onKeydown(char) {
-        this._content += char;
-        this._vertexCoords = [];
-        this._xOffset = 0;
-        this._sendVertices();
-    }
-
-    _appendQuad(char) {
+    _appendQuad(char, charIndex) {
         const code = char.charCodeAt(0);
         const data = textData[code];
-        this._vertexCoords.push(                             this._dimensions.x + this._xOffset + data.xoffset * this._scale,                                       this._dimensions.y,                  data.x / atlasData.width,   (data.y + data.height) / atlasData.height);
-        this._vertexCoords.push(                             this._dimensions.x + this._xOffset + data.xoffset * this._scale, this._dimensions.y + this._dimensions.height - data.yoffset * this._scale,                  data.x / atlasData.width,                   data.y / atlasData.height);
-        this._vertexCoords.push(  data.width * this._scale + this._dimensions.x + this._xOffset + data.xoffset * this._scale,                                       this._dimensions.y,   (data.x + data.width) / atlasData.width,   (data.y + data.height) / atlasData.height);
-        this._vertexCoords.push(  data.width * this._scale + this._dimensions.x + this._xOffset + data.xoffset * this._scale, this._dimensions.y + this._dimensions.height - data.yoffset * this._scale,   (data.x + data.width) / atlasData.width,                   data.y / atlasData.height);
+        this._vertices.push(                             this._dimensions.x + this._xOffset + data.xoffset * this._scale,                                       this._dimensions.y,                  data.x / atlasData.width,   (data.y + data.height) / atlasData.height);
+        this._vertices.push(                             this._dimensions.x + this._xOffset + data.xoffset * this._scale, this._dimensions.y + this._dimensions.height - data.yoffset * this._scale,                  data.x / atlasData.width,                   data.y / atlasData.height);
+        this._vertices.push(  data.width * this._scale + this._dimensions.x + this._xOffset + data.xoffset * this._scale,                                       this._dimensions.y,   (data.x + data.width) / atlasData.width,   (data.y + data.height) / atlasData.height);
+        this._vertices.push(  data.width * this._scale + this._dimensions.x + this._xOffset + data.xoffset * this._scale, this._dimensions.y + this._dimensions.height - data.yoffset * this._scale,   (data.x + data.width) / atlasData.width,                   data.y / atlasData.height);
+
+        const nextIndex = charIndex * 4;
+        this._indices.push(
+            nextIndex, nextIndex + 2, nextIndex + 1,
+            nextIndex + 1, nextIndex + 2, nextIndex + 3
+        );
 
         this._xOffset += data.xadvance * this._scale;
     }
@@ -91,8 +117,8 @@ class Text {
     render(gl, textShader) {
         textShader.loadUniform1i(textShader.uniforms.texture, this._textureID);
 
-        gl.bindVertexArray(this._voa);
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4 * this._content.length);
+        this._setupBuffers();
+        gl.drawElements(gl.TRIANGLES, this._indices.length, gl.UNSIGNED_SHORT, 0);
     }
 };
 

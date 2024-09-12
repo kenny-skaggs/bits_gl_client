@@ -19,7 +19,7 @@ export class TriangleStrip {
 
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(coords), gl.STATIC_DRAW);
         gl.vertexAttribPointer(0, this._valuesPerVertex, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(0);
+        gl.enableVertexAttribArray(null);
 
         return vao;
     }
@@ -27,5 +27,6 @@ export class TriangleStrip {
     render = () => {
         this.glContext.bindVertexArray(this.vao);
         this.glContext.drawArrays(this.glContext.TRIANGLE_STRIP, 0, this._vertexCount);
+        this.glContext.bindVertexArray(null);
     }
 }
