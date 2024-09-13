@@ -2,6 +2,10 @@ import { Button, TextInput } from "./graphics/components";
 import { initRendering, renderingInitialized } from "./graphics/text";
 import { ShaderProgram } from "./graphics/shader";
 import { InputManager } from "./services";
+import { tickAnimations } from "./animation";
+import { app as betterApp } from "./services";
+
+import { HomeListView } from "./views";
 
 const vertexShaderSource = `
     attribute vec4 aPosition;
@@ -72,11 +76,13 @@ InputManager.init(
 );
 
 
-const button = new Button(app.glContext, 5, 8, 2, 0.5);
+const button = new Button(2, 8, 2, 0.5);
 button.onClick = () => button.color = [0.0, 0.0, 0.8, 1.0];
 
 let text = undefined;
 initRendering(app.glContext);
+
+let mainListView = undefined;
 
 
 let lastTime = 0;
@@ -86,17 +92,15 @@ function renderLoop(now) {
     now *= 0.001; // convert to seconds
     const deltaTime = now - lastTime;
     lastTime = now;
-    // rotation += deltaTime;
 
     render(rotation);
 
     requestAnimationFrame(renderLoop);
+
+    tickAnimations(deltaTime);
 }
 
 requestAnimationFrame(renderLoop);
-
-
-
 
 
 function render(rotation) {
@@ -122,13 +126,21 @@ function render(rotation) {
     app.textureProgram.loadUniformMatrix4fv(app.textureProgram.uniforms.modelViewMatrix, modelViewMatrix);
 
     app.shaderProgram.use();
-    // button.render(app);
+    button.render(app);
 
 
     if (text === undefined && renderingInitialized) {
-        text = new TextInput(app.glContext, 1, 6, 3, 1);
+        text = new TextInput(app.glContext, 1, 6, 5, 1);
+        mainListView = new HomeListView(6.5, 4, 3, 5);
+        text.onSubmit = () => {
+            console.log(text.value);
+            mainListView.addItem(text.value);
+            text.setValue("");
+        };
+
     } else if (text !== undefined) {
         text.render(app);
+        mainListView.render();
     }
 }
 
@@ -148,6 +160,8 @@ function initGL() {
         gl, textVertexSource, textFragmentSource,
         ["projectionMatrix", "modelViewMatrix", "texture", "color"]
     );
+    betterApp.shaderProgram = app.shaderProgram;
+    betterApp.textureProgram = app.textureProgram;
 
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
@@ -157,4 +171,5 @@ function initGL() {
 
     app.glContext = gl;
     app.canvas = canvas;
+    betterApp.gl = gl;
 }

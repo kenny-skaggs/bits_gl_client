@@ -71,4 +71,10 @@ const InputManager = {
     }
 }
 
-export { InputManager };
+const app = {
+    gl: undefined,
+    shaderProgram: undefined,
+    textureProgram: undefined,
+};
+
+export { InputManager, app };

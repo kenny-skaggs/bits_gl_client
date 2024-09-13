@@ -1,4 +1,5 @@
 import { textData } from "../font/montserrat";
+import { app } from "../services";
 
 
 let renderingInitialized = false;
@@ -11,29 +12,29 @@ const atlasData = {
 
 function initRendering(gl) {
     const image = new Image();
-    image.onload = () => { handleAtlasLoaded(image, gl); };
+    image.onload = () => { handleAtlasLoaded(image); };
     image.src = "/font/montserrat_transparent.png";
 }
 
-function handleAtlasLoaded(image, gl) {
+function handleAtlasLoaded(image) {
     atlasData.width = image.width;
     atlasData.height = image.height;
 
-    textAtlas = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, textAtlas);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-    gl.generateMipmap(gl.TEXTURE_2D);
+    textAtlas = app.gl.createTexture();
+    app.gl.bindTexture(app.gl.TEXTURE_2D, textAtlas);
+    app.gl.texImage2D(app.gl.TEXTURE_2D, 0, app.gl.RGBA, app.gl.RGBA, app.gl.UNSIGNED_BYTE, image);
+    app.gl.texParameteri(app.gl.TEXTURE_2D, app.gl.TEXTURE_MAG_FILTER, app.gl.LINEAR);
+    app.gl.texParameteri(app.gl.TEXTURE_2D, app.gl.TEXTURE_MIN_FILTER, app.gl.LINEAR_MIPMAP_NEAREST);
+    app.gl.generateMipmap(app.gl.TEXTURE_2D);
 
     renderingInitialized = true;
 }
 
 
 class Text {
-    constructor(content, glContext, x, y, width, height) {
+    constructor(content, x, y, width, height) {
         this._content = content;
-        this._gl = glContext;
+        this._textColor = [0, 0, 0, 1];
 
         this._scale = height / 32;
         this._dimensions = {
@@ -41,7 +42,11 @@ class Text {
             width: width, height: height
         }
         this._setCharVars();
-        this._buildVoa(glContext);
+        this._buildVoa();
+    }
+
+    setTextColor(color) {
+        this._textColor = color;
     }
 
     _setCharVars() {
@@ -51,22 +56,22 @@ class Text {
         this.characterWidths = [];
     }
 
-    _buildVoa(gl) {
-        this._ab = gl.createBuffer();
-        this._eab = gl.createBuffer();
+    _buildVoa() {
+        this._ab = app.gl.createBuffer();
+        this._eab = app.gl.createBuffer();
 
         this._setupBuffers();
         this._sendVertices();
     }
 
     _setupBuffers() {
-        this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._ab);
-        this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, this._eab);
+        app.gl.bindBuffer(app.gl.ARRAY_BUFFER, this._ab);
+        app.gl.bindBuffer(app.gl.ELEMENT_ARRAY_BUFFER, this._eab);
 
-        this._gl.vertexAttribPointer(0, 2, this._gl.FLOAT, false, 4 * 4, 0);
-        this._gl.enableVertexAttribArray(0);
-        this._gl.vertexAttribPointer(1, 2, this._gl.FLOAT, false, 4 * 4, 2 * 4);
-        this._gl.enableVertexAttribArray(1);
+        app.gl.vertexAttribPointer(0, 2, app.gl.FLOAT, false, 4 * 4, 0);
+        app.gl.enableVertexAttribArray(0);
+        app.gl.vertexAttribPointer(1, 2, app.gl.FLOAT, false, 4 * 4, 2 * 4);
+        app.gl.enableVertexAttribArray(1);
     }
 
     setContent(content) {
@@ -78,17 +83,16 @@ class Text {
     }
 
     _sendVertices() {
-        console.log(this._content);
         [...this._content].forEach((char, index) => this._appendQuad(char, index));
-        this._gl.bufferData(
-            this._gl.ARRAY_BUFFER,
+        app.gl.bufferData(
+            app.gl.ARRAY_BUFFER,
             new Float32Array(this._vertices),
-            this._gl.DYNAMIC_DRAW
+            app.gl.DYNAMIC_DRAW
         );
-        this._gl.bufferData(
-            this._gl.ELEMENT_ARRAY_BUFFER,
+        app.gl.bufferData(
+            app.gl.ELEMENT_ARRAY_BUFFER,
             new Uint16Array(this._indices),
-            this._gl.DYNAMIC_DRAW
+            app.gl.DYNAMIC_DRAW
         );
     }
 
@@ -111,11 +115,17 @@ class Text {
         this.characterWidths.push(charWidth);
     }
 
-    render(gl, textShader) {
-        textShader.loadUniform1i(textShader.uniforms.texture, this._textureID);
+    render() {
+        app.textureProgram.loadUniformVec4v(
+            app.textureProgram.uniforms.color, this._textColor
+        );
+        app.textureProgram.loadUniform1i(
+            app.textureProgram.uniforms.texture, 
+            this._textureID
+        );
 
         this._setupBuffers();
-        gl.drawElements(gl.TRIANGLES, this._indices.length, gl.UNSIGNED_SHORT, 0);
+        app.gl.drawElements(app.gl.TRIANGLES, this._indices.length, app.gl.UNSIGNED_SHORT, 0);
     }
 };
 
