@@ -4,6 +4,7 @@ import { ShaderProgram } from "./graphics/shader";
 import { InputManager } from "./services";
 import { tickAnimations } from "./animation";
 import { app as betterApp } from "./services";
+import { Renderer } from "./rendering";
 
 import { HomeListView } from "./views";
 
@@ -78,6 +79,7 @@ InputManager.init(
 
 const button = new Button(2, 8, 2, 0.5);
 button.onClick = () => button.color = [0.0, 0.0, 0.8, 1.0];
+Renderer.addRenderable(button);
 
 let text = undefined;
 initRendering(app.glContext);
@@ -100,35 +102,11 @@ function renderLoop(now) {
     tickAnimations(deltaTime);
 }
 
-requestAnimationFrame(renderLoop);
+Renderer.startRenderLoop();
 
-
-function render(rotation) {
-    const gl = app.glContext;
-
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clearDepth(1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    const projectionMatrix = mat4.create();
-    mat4.ortho(projectionMatrix, 0.0, app.view.width, 0.0, app.view.height, 0.0, -100.0);
-
-    const modelViewMatrix = mat4.create();
-    mat4.rotate(modelViewMatrix, modelViewMatrix, rotation, [0, 0, 1]);
-
-    app.shaderProgram.use();
-    app.shaderProgram.loadUniformMatrix4fv(app.shaderProgram.uniforms.projectionMatrix, projectionMatrix);
-    app.shaderProgram.loadUniformMatrix4fv(app.shaderProgram.uniforms.modelViewMatrix, modelViewMatrix);
-
-    app.textureProgram.use();
-    app.textureProgram.loadUniformMatrix4fv(app.textureProgram.uniforms.projectionMatrix, projectionMatrix);
-    app.textureProgram.loadUniformMatrix4fv(app.textureProgram.uniforms.modelViewMatrix, modelViewMatrix);
-
-    app.shaderProgram.use();
-    button.render(app);
-
-
-    if (text === undefined && renderingInitialized) {
+function checkTextAssets() {
+    console.log("checking text");
+    if (renderingInitialized) {
         text = new TextInput(app.glContext, 1, 6, 5, 1);
         mainListView = new HomeListView(6.5, 4, 3, 5);
         text.onSubmit = () => {
@@ -137,9 +115,21 @@ function render(rotation) {
             text.setValue("");
         };
 
+        Renderer.addRenderable(text);
+        Renderer.addRenderable(mainListView);
+    } else {
+        setTimeout(checkTextAssets, 1);
+    }
+}
+
+setTimeout(checkTextAssets, 1);
+
+
+function render(rotation) {
+    if (text === undefined && renderingInitialized) {
+
     } else if (text !== undefined) {
-        text.render(app);
-        mainListView.render();
+        Renderer._renderFrame();
     }
 }
 
@@ -167,6 +157,9 @@ function initGL() {
 
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clearDepth(1.0);
 
     app.glContext = gl;
     app.canvas = canvas;

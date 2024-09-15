@@ -73,6 +73,10 @@ const InputManager = {
 
 const app = {
     gl: undefined,
+    view: {
+        width: 10.0,
+        height: 10.0
+    },
     shaderProgram: undefined,
     textureProgram: undefined,
 };

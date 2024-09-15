@@ -2,6 +2,7 @@ import { InputManager } from "../services";
 import { TriangleStrip } from "./primitives";
 import { Text } from "./text";
 import { LoopingAnimation } from "../animation";
+import { app } from "../services";
 
 class Button {
     constructor(x, y, width, height) {
@@ -23,7 +24,7 @@ class Button {
         InputManager.getInstance().addMouseClickListeners(this);
     }
 
-    render(app) {
+    render() {
         app.shaderProgram.loadUniformVec4v(app.shaderProgram.uniforms.color, this.color);
         this.triangleStrip.render();
     }
@@ -123,7 +124,7 @@ class TextInput {
         this._cursorOffsetX = this._findCursorOffsetX();
     }
 
-    render(app) {
+    render() {
         app.shaderProgram.loadUniformMatrix4fv(
             app.shaderProgram.uniforms.modelViewMatrix,
             this._modelMatrix
