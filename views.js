@@ -19,16 +19,52 @@ class HomeListView {
         this.width = width; this.height = height;
 
         this._listItems = [];
-        this._textVisuals = [];
         this._itemPadding = 0.3;
+        this._animationTime = 0.2;
 
         this._nextLineY = this.y + this.height - this.padding.y - 0.4;
         this._initTextVisuals();
     }
 
     addItem(name) {
-        this._listItems.push(name);
-        this._generateNewTextVisual(name);
+        let newIndex = 0;
+        let foundPosition = false;
+        while (newIndex < this._listItems.length && !foundPosition) {
+            const nextItem = this._listItems[newIndex];
+            foundPosition = name < nextItem.name;
+
+            if (!foundPosition) newIndex += 1;
+        }
+
+        const itemY = this.y + this.height - this.padding.y - 0.4 - (newIndex * this._itemPadding);
+        const text = new Text(
+            name,
+            this.x + this.padding.x, itemY,
+            this.width, 0.4
+        );
+        new OnetimeIncrementalAnimation(
+            (percent) => text.setTextColor([0, 0, 0, percent]),
+            this._animationTime
+        );
+
+        this._listItems.splice(
+            newIndex,
+            0,
+            {
+                name: name,
+                visual: text
+            }
+        );
+        for (let index = newIndex + 1; index < this._listItems.length; index++) {
+            const item = this._listItems[index];
+
+            new OnetimeIncrementalAnimation(
+                (value) => item.visual.dimensions.y = value,
+                this._animationTime,
+                item.visual.dimensions.y,
+                this.y + this.height - this.padding.y - 0.4 - (index * this._itemPadding)
+            );
+        }
     }
 
     _initTextVisuals() {
@@ -44,11 +80,11 @@ class HomeListView {
             this.x + this.padding.x, this._nextLineY,
             this.width, 0.4
         );
-        new OnetimeIncrementalAnimation(
-            (percent) => text.setTextColor([0, 0, 0, percent]),
-            0.2
-        );
-        this._textVisuals.push(text);
+
+        this._listItems.push({
+            name: itemName,
+            visual: text
+        });
         this._nextLineY -= this._itemPadding;
     }
 
@@ -61,8 +97,8 @@ class HomeListView {
 
 
         app.textureProgram.use();
-        this._textVisuals.forEach(text => {
-            text.render();
+        this._listItems.forEach(item => {
+            item.visual.render();
         });
 
         app.shaderProgram.use();

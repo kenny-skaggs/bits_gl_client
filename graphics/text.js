@@ -37,7 +37,7 @@ class Text {
         this._textColor = [0, 0, 0, 1];
 
         this._scale = height / 32;
-        this._dimensions = {
+        this.dimensions = {
             x: x, y: y,
             width: width, height: height
         }
@@ -99,10 +99,10 @@ class Text {
     _appendQuad(char, charIndex) {
         const code = char.charCodeAt(0);
         const data = textData[code];
-        this._vertices.push(                             this._dimensions.x + this._xOffset + data.xoffset * this._scale,                                       this._dimensions.y,                  data.x / atlasData.width,   (data.y + data.height) / atlasData.height);
-        this._vertices.push(                             this._dimensions.x + this._xOffset + data.xoffset * this._scale, this._dimensions.y + this._dimensions.height - data.yoffset * this._scale,                  data.x / atlasData.width,                   data.y / atlasData.height);
-        this._vertices.push(  data.width * this._scale + this._dimensions.x + this._xOffset + data.xoffset * this._scale,                                       this._dimensions.y,   (data.x + data.width) / atlasData.width,   (data.y + data.height) / atlasData.height);
-        this._vertices.push(  data.width * this._scale + this._dimensions.x + this._xOffset + data.xoffset * this._scale, this._dimensions.y + this._dimensions.height - data.yoffset * this._scale,   (data.x + data.width) / atlasData.width,                   data.y / atlasData.height);
+        this._vertices.push(                             this._xOffset + data.xoffset * this._scale,                                       0,                  data.x / atlasData.width,   (data.y + data.height) / atlasData.height);
+        this._vertices.push(                             this._xOffset + data.xoffset * this._scale,  this.dimensions.height - data.yoffset * this._scale,                  data.x / atlasData.width,                   data.y / atlasData.height);
+        this._vertices.push(  data.width * this._scale + this._xOffset + data.xoffset * this._scale,                                       0,   (data.x + data.width) / atlasData.width,   (data.y + data.height) / atlasData.height);
+        this._vertices.push(  data.width * this._scale + this._xOffset + data.xoffset * this._scale,  this.dimensions.height - data.yoffset * this._scale,   (data.x + data.width) / atlasData.width,                   data.y / atlasData.height);
 
         const nextIndex = charIndex * 4;
         this._indices.push(
@@ -124,8 +124,24 @@ class Text {
             this._textureID
         );
 
+
+        const modelViewMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.translate(
+            modelViewMatrix, modelViewMatrix,
+            [this.dimensions.x, this.dimensions.y, 0.0]
+        );
+        app.textureProgram.loadUniformMatrix4fv(
+            app.textureProgram.uniforms.modelViewMatrix,
+            modelViewMatrix
+        );
+
         this._setupBuffers();
         app.gl.drawElements(app.gl.TRIANGLES, this._indices.length, app.gl.UNSIGNED_SHORT, 0);
+        
+        app.textureProgram.loadUniformMatrix4fv(
+            app.textureProgram.uniforms.modelViewMatrix,
+            glMatrix.mat4.create()
+        );
     }
 };
 

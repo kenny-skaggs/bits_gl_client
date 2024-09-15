@@ -114,7 +114,6 @@ function render(rotation) {
     mat4.ortho(projectionMatrix, 0.0, app.view.width, 0.0, app.view.height, 0.0, -100.0);
 
     const modelViewMatrix = mat4.create();
-    // mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, -6.0]);
     mat4.rotate(modelViewMatrix, modelViewMatrix, rotation, [0, 0, 1]);
 
     app.shaderProgram.use();

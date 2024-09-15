@@ -40,23 +40,27 @@ class LoopingAnimation {
 
 
 class OnetimeIncrementalAnimation {
-    constructor(callback, timespan) {
+    constructor(callback, timespan, startValue = 0, endValue = 1) {
         this._animationTime = 0;
         this._timespan = timespan;
         this._callback = callback;
+        this._start = startValue;
+        this._end = endValue;
+        this._valueRange = (this._end - this._start);
         addAnimation(this);
 
-        this._callback(0);
+        this._callback(this._start);
     }
 
     tick(deltaTime) {
         this._animationTime += deltaTime;
         const percentTime = this._animationTime / this._timespan;
+        const newValue = this._start + (percentTime * this._valueRange);
         if (percentTime >= 1.0) {
-            this._callback(1.0);
+            this._callback(this._end);
             removeAnimation(this);
         } else {
-            this._callback(percentTime);
+            this._callback(newValue);
         }
     }
 }
