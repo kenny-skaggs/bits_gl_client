@@ -65,7 +65,7 @@ class TextInput {
         this.cursorColor = [0.0, 0.0, 0.0, 1.0];
         this.value = "ou";
         this.padding = {
-            x: 0.1, y: 0.15
+            x: 5, y: 5
         };
         this.onSubmit = undefined;
 
@@ -81,7 +81,7 @@ class TextInput {
             width, height
         ]);
 
-        let cursorWidth = 0.05;
+        let cursorWidth = 1.5;
         let cursory = this.padding.y, cursorHeight = height - this.padding.y * 2;
         this._cursorVisual = new TriangleStrip([
             0,           cursory,
@@ -90,7 +90,7 @@ class TextInput {
             cursorWidth, cursory + cursorHeight
         ]);
         this._cursorIndex = this.value.length;
-        this._cursorPaddingX = 0.06;
+        this._cursorPaddingX = 3;
         this._cursorOffsetX = this._findCursorOffsetX();
 
         this._modelMatrix = glMatrix.mat4.create();

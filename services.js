@@ -1,13 +1,6 @@
 
 const InputManager = {
-    init(appWidth, appHeight, canvasLeft, canvasTop, canvasWidth, canvasHeight) {
-        this._appWidth = appWidth;
-        this._appHeight = appHeight;
-        this._canvasLeft = canvasLeft;
-        this._canvasTop = canvasTop;
-        this._canvasWidth = canvasWidth;
-        this._canvasHeight = canvasHeight;
-        
+    init() {
         document.addEventListener("mousemove", this._mouseMoveHandler, false);
         this._mouseMoveListeners = [];
 
@@ -57,12 +50,17 @@ const InputManager = {
         this._keydownListeners.push(listener);
     },
     _convertCoord(eventX, eventY) {
+
+        app.view.width, app.view.height,
+        app.canvas.offsetLeft, app.canvas.offsetTop,
+        app.canvas.width, app.canvas.height
+
         const instance = InputManager.getInstance();
-        const relativeX = eventX - instance._canvasLeft;
-        const relativeY = eventY - instance._canvasTop;
+        const relativeX = eventX - app.canvas.offsetLeft;
+        const relativeY = eventY - app.canvas.offsetTop;
     
-        const projectedX = instance._appWidth * (relativeX / instance._canvasWidth);
-        const projectedY = instance._appHeight - instance._appHeight * (relativeY / instance._canvasHeight);
+        const projectedX = app.view.width * (relativeX / app.canvas.width);
+        const projectedY = app.view.height - app.view.height * (relativeY / app.canvas.height);
     
         return {
             x: projectedX,
@@ -77,6 +75,7 @@ const app = {
         width: 10.0,
         height: 10.0
     },
+    canvas: undefined,
     shaderProgram: undefined,
     textureProgram: undefined,
 };

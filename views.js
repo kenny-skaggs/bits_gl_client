@@ -22,7 +22,8 @@ class HomeListView {
         this._itemPadding = 0.3;
         this._animationTime = 0.2;
 
-        this._nextLineY = this.y + this.height - this.padding.y - 0.4;
+        this._textLineHeight = 20;
+        this._nextLineY = this.y + this.height - this.padding.y - this._textLineHeight;
         this._initTextVisuals();
     }
 
@@ -36,11 +37,11 @@ class HomeListView {
             if (!foundPosition) newIndex += 1;
         }
 
-        const itemY = this.y + this.height - this.padding.y - 0.4 - (newIndex * this._itemPadding);
+        const itemY = this.y + this.height - this.padding.y - this._textLineHeight - (newIndex * (this._textLineHeight + this._itemPadding));
         const text = new Text(
             name,
             this.x + this.padding.x, itemY,
-            this.width, 0.4
+            this.width, this._textLineHeight
         );
         new OnetimeIncrementalAnimation(
             (percent) => text.setTextColor([0, 0, 0, percent]),
@@ -62,7 +63,7 @@ class HomeListView {
                 (value) => item.visual.dimensions.y = value,
                 this._animationTime,
                 item.visual.dimensions.y,
-                this.y + this.height - this.padding.y - 0.4 - (index * this._itemPadding)
+                this.y + this.height - this.padding.y - this._textLineHeight - (index * (this._textLineHeight + this._itemPadding))
             );
         }
     }
@@ -78,7 +79,7 @@ class HomeListView {
         const text = new Text(
             itemName,
             this.x + this.padding.x, this._nextLineY,
-            this.width, 0.4
+            this.width, this._textLineHeight
         );
 
         this._listItems.push({

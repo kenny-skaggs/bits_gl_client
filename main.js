@@ -70,14 +70,10 @@ const app = {
     }
 }
 initGL();
-InputManager.init(
-    app.view.width, app.view.height,
-    app.canvas.offsetLeft, app.canvas.offsetTop,
-    app.canvas.width, app.canvas.height
-);
+InputManager.init();
 
 
-const button = new Button(2, 8, 2, 0.5);
+const button = new Button(100, 500, 60, 20);
 button.onClick = () => button.color = [0.0, 0.0, 0.8, 1.0];
 Renderer.addRenderable(button);
 
@@ -90,25 +86,15 @@ let mainListView = undefined;
 let lastTime = 0;
 let rotation = 0;
 
-function renderLoop(now) {
-    now *= 0.001; // convert to seconds
-    const deltaTime = now - lastTime;
-    lastTime = now;
-
-    render(rotation);
-
-    requestAnimationFrame(renderLoop);
-
-    tickAnimations(deltaTime);
-}
+betterApp.view.width = app.canvas.width;
+betterApp.view.height = app.canvas.height;
 
 Renderer.startRenderLoop();
 
 function checkTextAssets() {
-    console.log("checking text");
     if (renderingInitialized) {
-        text = new TextInput(app.glContext, 1, 6, 5, 1);
-        mainListView = new HomeListView(6.5, 4, 3, 5);
+        text = new TextInput(app.glContext, 50, 400, 250, 40);
+        mainListView = new HomeListView(350, 200, 200, 350);
         text.onSubmit = () => {
             console.log(text.value);
             mainListView.addItem(text.value);
@@ -135,6 +121,8 @@ function render(rotation) {
 
 function initGL() {
     const canvas = document.querySelector("#glcanvas");
+    betterApp.canvas = canvas;
+
     const gl = canvas.getContext("webgl2");
 
     if (gl === null) {
