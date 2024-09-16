@@ -73,9 +73,9 @@ initGL();
 InputManager.init();
 
 
-const button = new Button(100, 500, 60, 20);
-button.onClick = () => button.color = [0.0, 0.0, 0.8, 1.0];
-Renderer.addRenderable(button);
+// const button = new Button(100, 500, 60, 20);
+// button.onClick = () => button.color = [0.0, 0.0, 0.8, 1.0];
+// Renderer.addRenderable(button);
 
 let text = undefined;
 initRendering(app.glContext);
@@ -93,8 +93,10 @@ Renderer.startRenderLoop();
 
 function checkTextAssets() {
     if (renderingInitialized) {
-        text = new TextInput(app.glContext, 50, 400, 250, 40);
-        mainListView = new HomeListView(350, 200, 200, 350);
+        text = new TextInput(app.glContext, 10, 10, betterApp.view.width - 20, 40);
+        mainListView = new HomeListView(
+            10, 60, betterApp.view.width - 20, betterApp.view.height - 70
+        );
         text.onSubmit = () => {
             console.log(text.value);
             mainListView.addItem(text.value);
