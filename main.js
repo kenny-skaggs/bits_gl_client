@@ -1,12 +1,11 @@
-import { Button, TextInput } from "./graphics/components";
+import { TextInput } from "./graphics/components";
 import { initRendering, renderingInitialized } from "./graphics/text";
 import { ShaderProgram } from "./graphics/shader";
 import { InputManager } from "./services";
-import { tickAnimations } from "./animation";
 import { app as betterApp } from "./services";
 import { Renderer } from "./rendering";
 
-import { HomeListView } from "./views";
+import { HomeListView, SearchResultsView } from "./views";
 
 const vertexShaderSource = `
     attribute vec4 aPosition;
@@ -81,6 +80,7 @@ let text = undefined;
 initRendering(app.glContext);
 
 let mainListView = undefined;
+let searchResults = undefined;
 
 
 let lastTime = 0;
@@ -91,20 +91,35 @@ betterApp.view.height = app.canvas.height;
 
 Renderer.startRenderLoop();
 
+let nextItemId = 0;
+
 function checkTextAssets() {
     if (renderingInitialized) {
         text = new TextInput(app.glContext, 10, 10, betterApp.view.width - 20, 40);
+
         mainListView = new HomeListView(
             10, 60, betterApp.view.width - 20, betterApp.view.height - 70
         );
+
+        searchResults = new SearchResultsView(
+            20, 50, betterApp.view.width - 40, 200
+        )
+        text.onTextChanged = () => {
+            searchResults.showResults();
+        };
         text.onSubmit = () => {
-            console.log(text.value);
-            mainListView.addItem(text.value);
+            mainListView.addItem({
+                id: nextItemId,
+                name: text.value
+            });
+            nextItemId += 1;
             text.setValue("");
+            searchResults.hideResults();
         };
 
-        Renderer.addRenderable(text);
         Renderer.addRenderable(mainListView);
+        Renderer.addRenderable(searchResults);
+        Renderer.addRenderable(text);
     } else {
         setTimeout(checkTextAssets, 1);
     }

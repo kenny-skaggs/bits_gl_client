@@ -36,7 +36,8 @@ class Text {
         this._content = content;
         this._textColor = [0, 0, 0, 1];
 
-        this._scale = height / 32;
+        // this._scale = height / 32;
+        this._scale = 1;
         this.dimensions = {
             x: x, y: y,
             width: width, height: height
@@ -99,10 +100,30 @@ class Text {
     _appendQuad(char, charIndex) {
         const code = char.charCodeAt(0);
         const data = textData[code];
-        this._vertices.push(                             this._xOffset + data.xoffset * this._scale,                                       0,                  data.x / atlasData.width,   (data.y + data.height) / atlasData.height);
-        this._vertices.push(                             this._xOffset + data.xoffset * this._scale,  this.dimensions.height - data.yoffset * this._scale,                  data.x / atlasData.width,                   data.y / atlasData.height);
-        this._vertices.push(  data.width * this._scale + this._xOffset + data.xoffset * this._scale,                                       0,   (data.x + data.width) / atlasData.width,   (data.y + data.height) / atlasData.height);
-        this._vertices.push(  data.width * this._scale + this._xOffset + data.xoffset * this._scale,  this.dimensions.height - data.yoffset * this._scale,   (data.x + data.width) / atlasData.width,                   data.y / atlasData.height);
+        this._vertices.push(
+            this._xOffset + data.xoffset * this._scale,
+            0,
+            data.x / atlasData.width,
+            (data.y + data.height) / atlasData.height
+        );
+        this._vertices.push(
+            this._xOffset + data.xoffset * this._scale,
+            this.dimensions.height - data.yoffset * this._scale,
+            data.x / atlasData.width,
+            data.y / atlasData.height
+        );
+        this._vertices.push(
+            data.width * this._scale + this._xOffset + data.xoffset * this._scale,
+            0,
+            (data.x + data.width) / atlasData.width,
+            (data.y + data.height) / atlasData.height
+        );
+        this._vertices.push(
+            data.width * this._scale + this._xOffset + data.xoffset * this._scale,
+            this.dimensions.height - data.yoffset * this._scale,
+            (data.x + data.width) / atlasData.width,
+            data.y / atlasData.height
+        );
 
         const nextIndex = charIndex * 4;
         this._indices.push(

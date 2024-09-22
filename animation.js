@@ -40,7 +40,7 @@ class LoopingAnimation {
 
 
 class OnetimeIncrementalAnimation {
-    constructor(callback, timespan, startValue = 0, endValue = 1) {
+    constructor(callback, timespan, startValue = 0, endValue = 1, onComplete = undefined) {
         this._animationTime = 0;
         this._timespan = timespan;
         this._callback = callback;
@@ -50,6 +50,8 @@ class OnetimeIncrementalAnimation {
         addAnimation(this);
 
         this._callback(this._start);
+
+        this._onComplete = onComplete;
     }
 
     tick(deltaTime) {
@@ -58,6 +60,7 @@ class OnetimeIncrementalAnimation {
         const newValue = this._start + (percentTime * this._valueRange);
         if (percentTime >= 1.0) {
             this._callback(this._end);
+            if (this._onComplete !== undefined) this._onComplete();
             removeAnimation(this);
         } else {
             this._callback(newValue);

@@ -77,7 +77,7 @@ const app = {
     },
     canvas: undefined,
     shaderProgram: undefined,
-    textureProgram: undefined,
+    textureProgram: undefined
 };
 
 export { InputManager, app };

@@ -63,11 +63,12 @@ class TextInput {
         this.backgroundColor = [1.0, 1.0, 1.0, 1.0];
         this.textColor = [0.2, 0.2, 0.2, 1.0];
         this.cursorColor = [0.0, 0.0, 0.0, 1.0];
-        this.value = "ou";
+        this.value = "";
         this.padding = {
             x: 5, y: 5
         };
         this.onSubmit = undefined;
+        this.onTextChanged = undefined;
 
         this._textVisual = new Text(
             this.value,
@@ -158,6 +159,7 @@ class TextInput {
 
     onKeydown(char, keycode) {
         let didUpdateDisplay = false;
+        let didChangeText = false;
         if (keycode == 8) {  // backspace
             if (this._cursorIndex == 0) return;
 
@@ -170,6 +172,7 @@ class TextInput {
             this._cursorOffsetX = this._findCursorOffsetX();
 
             didUpdateDisplay = true;
+            didChangeText = true;
         } else if (keycode == 13) {
             if (this.onSubmit !== undefined) this.onSubmit();
         } else if (keycode < 32 || keycode > 126) {
@@ -199,9 +202,11 @@ class TextInput {
             this._cursorOffsetX = this._findCursorOffsetX();
 
             didUpdateDisplay = true;
+            didChangeText = true;
         }
 
         if (didUpdateDisplay) this._displayCursor = true;
+        if (didChangeText && this.onTextChanged !== undefined) this.onTextChanged(this.value);
     }
 }
 
