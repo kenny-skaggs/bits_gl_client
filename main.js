@@ -1,8 +1,8 @@
-import { TextInput } from "./graphics/components";
+import { Button, TextInput } from "./graphics/components";
 import { initRendering, renderingInitialized } from "./graphics/text";
 import { ShaderProgram } from "./graphics/shader";
 import { InputManager } from "./services";
-import { app as betterApp } from "./services";
+import { app as betterApp, Server } from "./services";
 import { Renderer } from "./rendering";
 
 import { HomeListView, SearchResultsView } from "./views";
@@ -105,7 +105,7 @@ function checkTextAssets() {
             20, 50, betterApp.view.width - 40, 200
         )
         text.onTextChanged = () => {
-            searchResults.showResults();
+            Server.search(text.value).then((results) => searchResults.showResults(results));
         };
         text.onSubmit = () => {
             mainListView.addItem({
@@ -116,6 +116,11 @@ function checkTextAssets() {
             text.setValue("");
             searchResults.hideResults();
         };
+        searchResults.onItemSelected = (item) => {
+            mainListView.addItem(item);
+            text.setValue("");
+            searchResults.hideResults();
+        }
 
         Renderer.addRenderable(mainListView);
         Renderer.addRenderable(searchResults);

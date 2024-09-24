@@ -5,13 +5,17 @@ import { LoopingAnimation } from "../animation";
 import { app } from "../services";
 
 class Button {
-    constructor(x, y, width, height) {
+    constructor(x, y, width, height, text, parent) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
-        this.color = [1.0, 0.0, 0.0, 1.0];
+        this._renderColor = [1.0, 0.0, 0.0, 1.0];
+        this.backgroundColor = this._renderColor;
+        this.hoveredColor = this._renderColor;
         this.onClick = undefined;
+
+        this._isHovering = false;
 
         this.triangleStrip = new TriangleStrip([
             x        ,          y,
@@ -22,23 +26,66 @@ class Button {
 
         InputManager.getInstance().addMouseMoveListeners(this);
         InputManager.getInstance().addMouseClickListeners(this);
+
+        this._textVisual = new Text(
+            text,
+            0, 0, this.width, this.height,
+            this
+        );
+        this._modelMatrix = glMatrix.mat4.create();
+        const parentPosition = parent.getPosition();
+        glMatrix.mat4.translate(
+            this._modelMatrix, this._modelMatrix,
+            [x + parentPosition.x, y + parentPosition.y, 0.0]
+        );
+
+        this._absolutePosition = {
+            x: parentPosition.x + x, y: parentPosition.y + y
+        };
+    }
+
+    destroy() {
+        InputManager.getInstance().removeClickListener(this);
+    }
+
+    getModelMatrix() {
+        const copy = glMatrix.mat4.create();
+        glMatrix.mat4.copy(copy, this._modelMatrix);
+        return copy;
     }
 
     render() {
-        app.shaderProgram.loadUniformVec4v(app.shaderProgram.uniforms.color, this.color);
+        app.shaderProgram.loadUniformVec4v(app.shaderProgram.uniforms.color, this._renderColor);
         this.triangleStrip.render();
+
+        app.textureProgram.use();
+        app.textureProgram.loadUniformVec4v(app.textureProgram.uniforms.color, [0, 0, 0, 1]);
+        this._textVisual.render();
+
+        app.shaderProgram.use();
     }
 
     containsPoint(x, y) {
         return (
-               x > this.x && x < this.x + this.width
-            && y > this.y && y < this.y + this.height
+               x > this._absolutePosition.x
+            && x < this._absolutePosition.x + this.width
+            && y > this._absolutePosition.y
+            && y < this._absolutePosition.y + this.height
         );
     }
 
     setIsHovered(isHovered) {
-        if (isHovered)  this.color = [0.0, 0.5, 0.7, 1.0];
-        else            this.color = [0.0, 0.5, 0.5, 1.0];
+        if (isHovered != this._isHovering) {
+            if (isHovered)  {
+                this._renderColor = this.hoveredColor;
+                document.documentElement.style.cursor = 'pointer';
+            } else {
+                this._renderColor = this.backgroundColor;
+                document.documentElement.style.cursor = 'default';
+            };
+
+            this._isHovering = isHovered;
+        }
     }
 
     onMouseMove(x, y) {
@@ -49,6 +96,7 @@ class Button {
         if (this.onClick === undefined) return;
 
         if (this.containsPoint(x, y)) {
+            console.log('clicked button');
             this.onClick();
         }
     }
@@ -72,8 +120,9 @@ class TextInput {
 
         this._textVisual = new Text(
             this.value,
-            x + this.padding.x, y + this.padding.y,
-            width, height / 1.4
+            this.padding.x, this.padding.y,
+            width, height / 1.4,
+            this
         );
         this._backgroundVisual = new TriangleStrip([
             0    ,      0,
@@ -123,6 +172,12 @@ class TextInput {
         this._textVisual.setContent(this.value);
         this._cursorIndex = this.value.length;
         this._cursorOffsetX = this._findCursorOffsetX();
+    }
+
+    getModelMatrix() {
+        let copy = glMatrix.mat4.create();
+        glMatrix.mat4.copy(copy, this._modelMatrix);
+        return copy;
     }
 
     render() {

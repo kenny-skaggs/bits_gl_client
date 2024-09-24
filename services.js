@@ -18,6 +18,7 @@ const InputManager = {
     _mouseMoveHandler(event) {
         const instance = InputManager.getInstance();
         const coords = instance._convertCoord(event.clientX, event.clientY);
+
         instance._mouseMoveListeners.forEach(listener => {
             listener.onMouseMove(coords.x, coords.y);
         });
@@ -45,6 +46,9 @@ const InputManager = {
     },
     addMouseClickListeners(listener) {
         this._mouseClickListeners.push(listener);
+    },
+    removeClickListener(listener) {
+        this._mouseClickListeners = this._mouseClickListeners.filter((l) => l !== listener);
     },
     addKeydownListener(listener) {
         this._keydownListeners.push(listener);
@@ -80,4 +84,29 @@ const app = {
     textureProgram: undefined
 };
 
-export { InputManager, app };
+
+const allItems = [
+    { id: 2000, name: "butternut squash" },
+    { id: 2001, name: "vital wheat gluten" },
+    { id: 2002, name: "agar" },
+    { id: 2003, name: "navy beans" },
+    { id: 2004, name: "soy sauce" },
+    { id: 2005, name: "coffee candy" },
+    { id: 2006, name: "dish soap" }
+];
+
+const Server = {
+    search(text) {
+        const promise = new Promise((resolve) => {
+            const results = allItems.filter((item) => item.name.includes(text));
+
+            setTimeout(() => {
+                resolve(results);
+            }, 1000);
+        });
+        
+        return promise;
+    }
+}
+
+export { InputManager, app, Server };

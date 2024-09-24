@@ -32,18 +32,19 @@ function handleAtlasLoaded(image) {
 
 
 class Text {
-    constructor(content, x, y, width, height) {
+    constructor(content, x, y, width, height, parent = undefined) {
         this._content = content;
         this._textColor = [0, 0, 0, 1];
 
-        // this._scale = height / 32;
-        this._scale = 1;
+        this._scale = height / 32;
         this.dimensions = {
             x: x, y: y,
             width: width, height: height
         }
         this._setCharVars();
         this._buildVoa();
+
+        this._parent = parent;
     }
 
     setTextColor(color) {
@@ -100,27 +101,31 @@ class Text {
     _appendQuad(char, charIndex) {
         const code = char.charCodeAt(0);
         const data = textData[code];
+        const baselineOffset = 10; // the font offsets things a little low
+        const charTop = this.dimensions.height - (data.yoffset - baselineOffset) * this._scale;
+        const charBottom = charTop - data.height * this._scale;
+        const charLeft = this._xOffset;
         this._vertices.push(
-            this._xOffset + data.xoffset * this._scale,
-            0,
+            charLeft,
+            charBottom,
             data.x / atlasData.width,
             (data.y + data.height) / atlasData.height
         );
         this._vertices.push(
-            this._xOffset + data.xoffset * this._scale,
-            this.dimensions.height - data.yoffset * this._scale,
+            charLeft,
+            charTop,
             data.x / atlasData.width,
             data.y / atlasData.height
         );
         this._vertices.push(
             data.width * this._scale + this._xOffset + data.xoffset * this._scale,
-            0,
+            charBottom,
             (data.x + data.width) / atlasData.width,
             (data.y + data.height) / atlasData.height
         );
         this._vertices.push(
             data.width * this._scale + this._xOffset + data.xoffset * this._scale,
-            this.dimensions.height - data.yoffset * this._scale,
+            charTop,
             (data.x + data.width) / atlasData.width,
             data.y / atlasData.height
         );
@@ -146,7 +151,9 @@ class Text {
         );
 
 
-        const modelViewMatrix = glMatrix.mat4.create();
+        let modelViewMatrix = glMatrix.mat4.create();
+        if (this._parent !== undefined) modelViewMatrix = this._parent.getModelMatrix();
+
         glMatrix.mat4.translate(
             modelViewMatrix, modelViewMatrix,
             [this.dimensions.x, this.dimensions.y, 0.0]

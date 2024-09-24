@@ -71,12 +71,10 @@ class OnetimeIncrementalAnimation {
 
 function addAnimation(animation) {
     registeredAnimations.push(animation);
-    console.log("added animation, have " + registeredAnimations.length);
 }
 
 function removeAnimation(animation) {
     registeredAnimations = registeredAnimations.filter((a) => a !== animation);
-    console.log("removed animation, have " + registeredAnimations.length);
 }
 
 function tickAnimations(deltaTime) {
